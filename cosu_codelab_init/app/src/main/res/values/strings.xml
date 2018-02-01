@@ -21,4 +21,8 @@
     <string name="pic_button">Take picture</string>
     <string name="no_camera_apps">No camera apps available to capture photo</string>
     <string name="main_image_description">Pictures taken will be displayed here</string>
+    <string name="start_lock_task_mode">START LOCK TASK MODE</string>
+    <string name="not_lock_whitelisted">This Application is not whitelisted for lock task mode</string>
+    <string name="lock_image_description">Lock Image Description</string>
+    <string name="stop_lock">Stop Lock Task Mode</string>
 </resources>

@@ -17,6 +17,7 @@ package com.google.codelabs.cosu;
 import android.Manifest;
 import android.app.Activity;
 import android.app.admin.DevicePolicyManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -56,6 +57,8 @@ public class MainActivity extends Activity {
     public static final String EXTRA_FILEPATH =
             "com.google.codelabs.cosu.EXTRA_FILEPATH";
 
+    private PackageManager mPackageManager;
+    private ComponentName mAdminComponentName;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -94,16 +97,31 @@ public class MainActivity extends Activity {
         // lock to screen later
         mDevicePolicyManager = (DevicePolicyManager)
                 getSystemService(Context.DEVICE_POLICY_SERVICE);
+        // Retrieve ComponentName of the DeviceAdminReceiver and a PackageManager so that you can enable and disable LockedActivity
+        // retrieve DeviceAdminReceiver ComponentName so we can make device management api calls later
+        // Retrieve DeviceAdminReceiver ComponentName so we can make
+// device management api calls later
+        mAdminComponentName = DeviceAdminReceiver.getComponentName(this);
+
+// Retrieve Package Manager so that we can enable and
+// disable LockedActivity
+        mPackageManager = this.getPackageManager();
 
         lockTaskButton = (Button) findViewById(R.id.start_lock_button);
         lockTaskButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if ( mDevicePolicyManager.isLockTaskPermitted(
+                if ( mDevicePolicyManager.isDeviceOwnerApp(
                         getApplicationContext().getPackageName())) {
                     Intent lockIntent = new Intent(getApplicationContext(),
                             LockedActivity.class);
                     lockIntent.putExtra(EXTRA_FILEPATH,mCurrentPhotoPath);
+
+                    mPackageManager.setComponentEnabledSetting(
+                            new ComponentName(getApplicationContext(),
+                                    LockedActivity.class),
+                            PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+                            PackageManager.DONT_KILL_APP);
                     startActivity(lockIntent);
                     finish();
                 } else {
@@ -113,6 +131,18 @@ public class MainActivity extends Activity {
                 }
             }
         });
+        // Check to see if started by LockActivity and disable LockActivity if so
+        Intent intent = getIntent();
+
+        if(intent.getIntExtra(LockedActivity.LOCK_ACTIVITY_KEY,0) ==
+                LockedActivity.FROM_LOCK_ACTIVITY){
+            mDevicePolicyManager.clearPackagePersistentPreferredActivities(
+                    mAdminComponentName,getPackageName());
+            mPackageManager.setComponentEnabledSetting(
+                    new ComponentName(getApplicationContext(), LockedActivity.class),
+                    PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                    PackageManager.DONT_KILL_APP);
+        }
 
         imageView = (ImageView) findViewById(R.id.main_imageView);
 

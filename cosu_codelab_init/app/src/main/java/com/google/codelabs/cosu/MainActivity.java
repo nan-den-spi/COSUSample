@@ -16,6 +16,8 @@ package com.google.codelabs.cosu;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.admin.DevicePolicyManager;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -44,10 +46,16 @@ public class MainActivity extends Activity {
     private ImageView imageView;
     private String mCurrentPhotoPath;
     private int permissionCheck;
-
     private static final int REQUEST_IMAGE_CAPTURE = 1;
+
     private static final int PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 2;
     private static final String FILE_TAG = "File Creation";
+
+    // for cosu
+    private Button btnStartLock;
+    // DevicePolicyManager will be used to verify whether your app is whitelisted to start locktask mode
+    public DevicePolicyManager mDevicePolicyManager;
+    public static final String EXTRA_FILEPATH = "com.google.codelabs.cosu.EXTRA_FILEPATH";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,6 +88,23 @@ public class MainActivity extends Activity {
             }
         });
 
+        // instantiating devicepolicymanager object
+        mDevicePolicyManager = (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
+        btnStartLock = (Button) findViewById(R.id.btnStartLock);
+        btnStartLock.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                // check whether this app has been allowed to initiate lock task mode.
+                boolean isPermitted = mDevicePolicyManager.isLockTaskPermitted(getApplicationContext().getPackageName());
+                if (isPermitted) {
+                    Intent lockIntent = new Intent(MainActivity.this, LockedActivity.class);
+                    lockIntent.putExtra(EXTRA_FILEPATH, mCurrentPhotoPath);
+                    startActivity(lockIntent);
+                } else {
+                    Toast.makeText(getApplicationContext(), R.string.not_lock_whitelisted, Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
         imageView = (ImageView) findViewById(R.id.main_imageView);
 
         // Check to see if permission to access external storage is granted,
@@ -141,6 +166,12 @@ public class MainActivity extends Activity {
         }
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        System.out.println("MainActivity#onDestroy");
+    }
+
     private void setImageToView(){
 
         // Save the file in gallery
@@ -171,5 +202,6 @@ public class MainActivity extends Activity {
 
         Bitmap imageBitmap = BitmapFactory.decodeFile(mCurrentPhotoPath, bmOptions);
         imageView.setImageBitmap(imageBitmap);
+        btnStartLock.setEnabled(true);
     }
 }
