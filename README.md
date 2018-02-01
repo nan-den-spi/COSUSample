@@ -1,5 +1,6 @@
 # cosu sample application 
 
+How to run the code: https://codelabs.developers.google.com/codelabs/cosu/index.html?index=..%2F..%2Findex#2
 
 ### License
 
